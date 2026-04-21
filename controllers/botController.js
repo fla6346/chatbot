@@ -1,5 +1,5 @@
 const axios = require('axios');
-const response = await axios.get('https://evento.cidtec-uc.com');
+
 //const { getModels } = require('../models/index.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -49,6 +49,7 @@ const botStatus = (req, res) => {
 };
 
 const telegramWebhook = async (req, res) => {
+    const response = await axios.get('https://evento.cidtec-uc.com');
   const { message } = req.body;
   if (!message?.text) return res.sendStatus(200);
 
@@ -76,7 +77,8 @@ const whatsappWebhook = async (req, res) => {
 };
 
 const appChat = async (req, res) => {
-  try {
+    try {
+      const response = await axios.get('https://evento.cidtec-uc.com');
     const  Evento = response.data; // Asegúrate de que la URL de eventos es correcta y responde con el formato esperado
    // const models = getModels();
     const {Evento, Message}= models

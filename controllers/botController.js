@@ -1,5 +1,6 @@
 const axios = require('axios');
-const { getModels } = require('../models/index.js');
+const response = await axios.get('https://evento.cidtec-uc.com');
+//const { getModels } = require('../models/index.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -32,13 +33,7 @@ async function askGemini(userMessage, senderInfo = 'Invitado', eventosContexto =
   }
   return "Servicio saturado, intenta en un momento.";
 }
-function getMessage() {
-  try {
-    return getModels()?.Message || null;
-  } catch (_) {
-    return null;
-  }
-}
+
 
 const getMessages = async (req, res) => {
   try {
@@ -82,7 +77,8 @@ const whatsappWebhook = async (req, res) => {
 
 const appChat = async (req, res) => {
   try {
-    const models = getModels();
+    const  Evento = response.data; // Asegúrate de que la URL de eventos es correcta y responde con el formato esperado
+   // const models = getModels();
     const {Evento, Message}= models
     const { message, sender = 'invitado' } = req.body;
 
@@ -131,7 +127,7 @@ const appChat = async (req, res) => {
 
 const getChatHistory = async (req, res) => {
   try {
-    const Message = getMessage();
+    const Mensaje = response.data; // Asegúrate de que la URL de mensajes es correcta y responde con el formato esperado
     const { email } = req.params;
     if (!email || email === 'invitado' || !Message) {
       return res.json({ messages: [] });

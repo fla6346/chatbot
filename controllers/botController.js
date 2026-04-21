@@ -77,53 +77,28 @@ const whatsappWebhook = async (req, res) => {
 };
 
 const appChat = async (req, res) => {
-    try {
-      const response = await axios.get('https://evento.cidtec-uc.com');
-    const  Evento = response.data; // Asegúrate de que la URL de eventos es correcta y responde con el formato esperado
-   // const models = getModels();
-    const {Evento, Message}= models
+  try {
     const { message, sender = 'invitado' } = req.body;
 
-        if (!message?.trim()) return res.status(400).json({ error: 'Mensaje vacío' });
-    let eventosContexto = "";
-
-    if (Evento) {
-      try {
-        const listaEventos = await Evento.findAll({
-          where: { estado: 'activo' },
-          limit: 5,
-          attributes: ['nombreevento', 'fechaevento', 'descripcion', 'lugarevento']
-        });
-
-        if (listaEventos.length > 0) {
-          eventosContexto = listaEventos.map(e => 
-            `- ${e.nombreevento}: el ${e.fechaevento} en ${e.lugarevento}. Desc: ${e.descripcion}`
-          ).join('\n');
-        }
-      } catch (dbErr) {
-        console.error('⚠️ Error al consultar eventos:', dbErr.message);
-        eventosContexto = "No hay eventos disponibles en este momento.";
+    // 1. Obtener datos de tu cPanel aquí adentro (con await)
+    let eventosContexto = "No hay eventos hoy.";
+    try {
+      const response = await axios.get('https://evento.cidtec-uc.com/api/tus-eventos'); 
+      // Si el cPanel te da un JSON, lo procesas:
+      if (response.data) {
+        eventosContexto = JSON.stringify(response.data);
       }
+    } catch (apiErr) {
+      console.log("No se pudo conectar con cPanel, usando contexto vacío.");
     }
 
-    // 2. IMPORTANTE: Pasamos eventosContexto a la función askGemini
-    const reply = await askGemini(
-      message, 
-      sender,
-      eventosContexto // <--- Aquí es donde se la pasamos
-    );
-
-    // 3. Guardar en historial
-    if (models.Message && sender !== 'invitado') {
-      await models.Message.create({ sender, text: message, role: 'user', timestamp: new Date() });
-      await models.Message.create({ sender, text: reply, role: 'bot', timestamp: new Date() });
-    }
+    // 2. Llamar a Gemini
+    const reply = await askGemini(message, eventosContexto);
 
     res.json({ reply });
-
   } catch (error) {
-    console.error('❌ Error en appChat:', error.message);
-    res.status(500).json({ error: 'Error al procesar la solicitud.' });
+    console.error("Error en el bot:", error.message);
+    res.status(500).json({ error: "Error interno" });
   }
 };
 
@@ -158,7 +133,7 @@ module.exports = {
   getMessages,
   telegramWebhook,
   whatsappWebhook,
-  botStatus,
+  botStatus: (req, res) => res.json({ status: 'online' }),
   appChat,
   getChatHistory,
 };
